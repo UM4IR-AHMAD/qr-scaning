@@ -7,13 +7,28 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 
-// data
+
 let qrCodeImage = ref(null);
-
-Echo.channel('qr-code-url')
-    .listen('QrCodeSent', (e) => {                
-        qrCodeImage.value = e.message;
+const pusherData = reactive({
+    'key': import.meta.env.VITE_PUSHER_KEY,
+    'cluster': import.meta.env.VITE_PUSHER_CLUSTER,
+    'channel': import.meta.env.VITE_PUSHER_CHANNEL,
+    'event': import.meta.env.VITE_PUSHER_EVENT,
 });
+
+
+Pusher.logToConsole = true;
+
+const pusher = new Pusher(pusherData.key, {
+    cluster: pusherData.cluster
+});
+
+const channel = pusher.subscribe(pusherData.channel);
+channel.bind(pusherData.event, function(data) {
+    if (data.url??null) 
+        qrCodeImage.value = data.url;
+});
+
 </script>
